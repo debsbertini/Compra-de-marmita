@@ -26,7 +26,7 @@ No arquivo [`index.html`](file:///c:/Users/migue/OneDrive/Documentos/compra%20de
 /* -------------------------------------------------------------------------
  * 1. CONFIGURAÇÃO DA CHAVE DA API
  * ------------------------------------------------------------------------- */
-const MANUAL_API_KEY = "AQ.Ab8RN6L4xqA2IOQP0Ccc79xhTZgcEp3dtny7sYDMkVOCESlMzQ";
+const MANUAL_API_KEY = "";
 ```
 
 ---
