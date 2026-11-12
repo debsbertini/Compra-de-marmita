@@ -9,7 +9,7 @@ Aplicação Single Page Application (SPA) 100% client-side (HTML, CSS e JavaScri
 A chave da API configurada para os testes do projeto está em:
 
 ```text
-https://drive.google.com/file/d/1pw1npFnNFCrDt3opHs2ICeQJTp5wCxBK/view?usp=sharing
+https://drive.google.com/file/d/1k5cGXVucccrpQPqG902Yle5a3yevVq30/view?usp=sharing
 ```
 
 ### Onde Configurar a API Key
