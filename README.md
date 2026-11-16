@@ -1,26 +1,26 @@
 # Marmita Express - Chatbot SPA de Vendas
 
-Aplicação Single Page Application (SPA) 100% client-side (HTML, CSS e JavaScript puro) desenvolvida para o restaurante de marmitas **Marmita Express**. Conecta-se diretamente à API do **Google Gemini** (`gemini-3.8-flash`) para realizar atendimento, montagem de pedidos personalizados e cálculo de valores com regras estritas de segurança.
+Aplicação Single Page Application (SPA) 100% client-side (HTML, CSS e JavaScript puro) desenvolvida para o restaurante de marmitas **Marmita Express**. Suporta chaves de API de **qualquer provedor LLM** (**OpenRouter**, **OpenAI**, **Google Gemini**, **Groq**, etc.) com campo de texto livre para digitar o modelo desejado.
 
 ---
 
-## 🔑 Chave API
+## 🔑 Como Configurar a API Key e o Modelo
 
-### Onde Configurar a API Key
+Por motivos de segurança (para evitar exposição de credenciais em repositórios públicos como o GitHub Pages), nenhuma chave de API vem fixa no código. Você tem duas formas de configurar a sua chave:
 
-Você tem duas formas convenientes de usar a chave:
+### Opção 1: Diretamente pela Interface (Recomendado)
+Ao abrir a página (ou clicando no ícone de chave **🔑** no topo direito do chat a qualquer momento):
+1. **Campo API Key**: Cole sua chave de qualquer provedor (`sk-or-v1-...` para OpenRouter, `sk-...` para OpenAI, `gsk_...` para Groq, `AIza...` ou `AQ....` para Google Gemini).
+2. **Campo de Texto do Modelo**: Digite livremente o nome do modelo correspondente à sua chave (ex: `openrouter/auto`, `openai/gpt-4o-mini`, `gemini-3.6-flash`, `gemini-3.5-flash`, `llama-3.3-70b-versatile`). A chave fica salva apenas temporariamente na sessão do navegador (`sessionStorage`).
 
-#### Opção 1: Diretamente pela Interface (Recomendado para Deploy / GitHub Pages)
-Ao abrir a página, um **modal seguro** pode ser acessado clicando no ícone de chave (🔑) no topo direito da barra de título a qualquer momento. A chave é salva temporariamente apenas na sua sessão de navegador (`sessionStorage`).
-Além disso, há um seletor de modelos com **auto-detecção inteligente** (utiliza `gemini-3.8-flash` como padrão ativo e consulta `ListModels` em caso de fallback para garantir 100% de compatibilidade com a chave).
-
-#### Opção 2: Fixar no Código Fonte (Para Testes Locais)
-No arquivo [`index.html`](file:///c:/Users/migue/OneDrive/Documentos/compra%20de%20marmita/index.html), na linha 566:
+### Opção 2:No Código Fonte (Apenas para Testes Locais)
+No arquivo [`index.html`](file:///c:/Users/migue/OneDrive/Documentos/compra%20de%20marmita/index.html), nas linhas 577-578:
 ```javascript
 /* -------------------------------------------------------------------------
- * 1. CONFIGURAÇÃO DA CHAVE DA API
+ * 1. CONFIGURAÇÃO DA CHAVE DA API E MODELO
  * ------------------------------------------------------------------------- */
-const MANUAL_API_KEY = "";
+const MANUAL_API_KEY = ""; // <-- Cole sua API Key aqui para testes locais ou insira pelo modal (🔑)
+const MANUAL_DEFAULT_MODEL = "openrouter/auto";
 ```
 
 ---
