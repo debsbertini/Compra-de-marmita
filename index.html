@@ -1,0 +1,1770 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Marmita Express - Pedidos Online</title>
+  <style>
+    /* RESET E BLOQUEIO DE SELEÇÃO / QUEBRA DE LAYOUT */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      height: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #0b141a;
+      user-select: none;
+      -webkit-user-select: none;
+      overscroll-behavior: none;
+    }
+
+    /* Container Principal */
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      height: 100dvh;
+      max-width: 520px;
+      margin: 0 auto;
+      background-color: #0b141a;
+      box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Cabeçalho */
+    .chat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background-color: #202c33;
+      color: #e9edef;
+      z-index: 10;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .avatar-wrapper {
+      position: relative;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ff6b35, #f7941d);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 2px 6px rgba(255, 107, 53, 0.3);
+      pointer-events: none;
+    }
+
+    .online-indicator {
+      position: absolute;
+      bottom: 2px;
+      right: 2px;
+      width: 11px;
+      height: 11px;
+      background-color: #00a884;
+      border: 2px solid #202c33;
+      border-radius: 50%;
+    }
+
+    .restaurant-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .restaurant-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: #e9edef;
+      line-height: 1.2;
+    }
+
+    .status-badge {
+      font-size: 12px;
+      color: #00a884;
+      font-weight: 500;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .header-btn {
+      background: transparent;
+      border: none;
+      color: #aebac1;
+      padding: 8px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.2s, color 0.2s;
+    }
+
+    .header-btn:hover {
+      background-color: rgba(255, 255, 255, 0.08);
+      color: #e9edef;
+    }
+
+    /* Área de Mensagens */
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background-color: #0c1317;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+      background-size: 20px 20px;
+      scroll-behavior: smooth;
+    }
+
+    /* Scrollbar estilizada */
+    .chat-messages::-webkit-scrollbar {
+      width: 5px;
+    }
+    .chat-messages::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .chat-messages::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 3px;
+    }
+
+    /* Balões de Mensagem */
+    .message-row {
+      display: flex;
+      width: 100%;
+    }
+
+    .message-row.user {
+      justify-content: flex-end;
+    }
+
+    .message-row.bot {
+      justify-content: flex-start;
+    }
+
+    .message-bubble {
+      max-width: 82%;
+      padding: 9px 13px 8px 13px;
+      border-radius: 10px;
+      font-size: 14.5px;
+      line-height: 1.45;
+      position: relative;
+      word-wrap: break-word;
+      user-select: text;
+      -webkit-user-select: text;
+      animation: fadeIn 0.2s ease-out forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .message-row.user .message-bubble {
+      background-color: #005c4b;
+      color: #e9edef;
+      border-top-right-radius: 2px;
+    }
+
+    .message-row.bot .message-bubble {
+      background-color: #202c33;
+      color: #e9edef;
+      border-top-left-radius: 2px;
+    }
+
+    .message-bubble strong {
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .message-bubble ul {
+      margin-left: 18px;
+      margin-top: 4px;
+      margin-bottom: 4px;
+    }
+
+    .message-bubble li {
+      margin-bottom: 2px;
+    }
+
+    .message-meta {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 4px;
+      margin-top: 4px;
+      font-size: 11px;
+      color: rgba(233, 237, 239, 0.6);
+      user-select: none;
+    }
+
+    .ticks {
+      color: #53bdeb;
+      font-size: 13px;
+      line-height: 1;
+    }
+
+    /* Indicador de Digitando */
+    .typing-indicator {
+      display: none;
+      align-items: center;
+      gap: 4px;
+      background-color: #202c33;
+      padding: 10px 14px;
+      border-radius: 10px;
+      width: fit-content;
+      margin-bottom: 4px;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    .typing-indicator.active {
+      display: flex;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      background-color: #8696a0;
+      border-radius: 50%;
+      animation: bounce 1.4s infinite ease-in-out both;
+    }
+
+    .dot:nth-child(1) { animation-delay: -0.32s; }
+    .dot:nth-child(2) { animation-delay: -0.16s; }
+    .dot:nth-child(3) { animation-delay: 0s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: scale(0.6); opacity: 0.5; }
+      40% { transform: scale(1.1); opacity: 1; background-color: #00a884; }
+    }
+
+    /* Barra de Digitação */
+    .chat-footer {
+      padding: 10px 14px;
+      background-color: #202c33;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 10;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .chat-input-wrapper {
+      flex: 1;
+      background-color: #2a3942;
+      border-radius: 24px;
+      display: flex;
+      align-items: center;
+      padding: 4px 14px;
+      transition: background-color 0.2s;
+    }
+
+    .chat-input-wrapper:focus-within {
+      background-color: #32434e;
+    }
+
+    .chat-input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #d1d7db;
+      font-size: 15px;
+      font-family: inherit;
+      padding: 8px 0;
+      user-select: text;
+    }
+
+    .chat-input::placeholder {
+      color: #8696a0;
+    }
+
+    .send-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background-color: #00a884;
+      border: none;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background-color 0.2s, transform 0.1s;
+      flex-shrink: 0;
+    }
+
+    .send-btn:hover {
+      background-color: #029474;
+    }
+
+    .send-btn:active {
+      transform: scale(0.94);
+    }
+
+    .send-btn:disabled {
+      background-color: #374248;
+      color: #8696a0;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* SVGs */
+    svg {
+      fill: currentColor;
+    }
+  </style>
+</head>
+<body oncontextmenu="return false;" ondragstart="return false;">
+
+  <div class="app-container" id="app">
+    <!-- Cabeçalho -->
+    <header class="chat-header">
+      <div class="header-left">
+        <div class="avatar-wrapper">
+          🍱
+          <div class="online-indicator"></div>
+        </div>
+        <div class="restaurant-info">
+          <span class="restaurant-name">Marmita Express</span>
+          <span class="status-badge" id="botStatus">Online agora</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <!-- Botão para reiniciar conversa -->
+        <button class="header-btn" id="btnResetChat" title="Reiniciar Atendimento">
+          <svg width="20" height="20" viewBox="0 0 24 24">
+            <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Área de Mensagens -->
+    <main class="chat-messages" id="chatMessages">
+      <!-- Mensagens inseridas dinamicamente via JS -->
+    </main>
+
+    <!-- Indicador de Digitando -->
+    <div style="padding: 0 16px;">
+      <div class="typing-indicator" id="typingIndicator">
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+      </div>
+    </div>
+
+    <!-- Barra de Input -->
+    <footer class="chat-footer">
+      <div class="chat-input-wrapper">
+        <input 
+          type="text" 
+          class="chat-input" 
+          id="messageInput" 
+          placeholder="Digite sua mensagem ou pedido..." 
+          autocomplete="off"
+          spellcheck="false"
+        >
+      </div>
+      <button class="send-btn" id="sendBtn" title="Enviar Mensagem">
+        <svg width="20" height="20" viewBox="0 0 24 24">
+          <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+        </svg>
+      </button>
+    </footer>
+  </div>
+
+  <script>
+    /**
+     * =========================================================================
+     * MARMITA EXPRESS - CHATBOT 100% CLIENT-SIDE (NLP CLÁSSICO + ARQUITETURA ELIZA)
+     * =========================================================================
+     * SEGURANÇA, ENCAPSULAMENTO E ARQUITETURA OFFLINE:
+     * - Encapsulado em IIFE ('use strict'): nenhuma variável global é exposta em window.
+     * - 100% Offline: sem chamadas de rede (fetch), sem LLMs e sem chaves de API.
+     * - Pipeline clássico de NLP: Normalização NFD, Tokenização, Remoção de Stopwords,
+     *   Lematização/Sinônimos e Extração de Entidades baseada em Tokens.
+     * - Motor inspirado no ELIZA (Joseph Weizenbaum, 1966): Regras hierárquicas por
+     *   peso (rank), Decomposição via Regex, Reflexão Pronominal (eu/meu -> você/seu)
+     *   e Reassemblagem contextual combinada com Máquina de Estados Finitos (FSM).
+     * =========================================================================
+     */
+    (function () {
+      'use strict';
+
+      /* -------------------------------------------------------------------------
+       * 1. CARDÁPIO OFICIAL E TABELA DE PREÇOS (IMUTÁVEL COM OBJECT.FREEZE)
+       * ------------------------------------------------------------------------- */
+      const CARDAPIO_OFICIAL = Object.freeze({
+        taxaEntrega: 5.00,
+        dias: Object.freeze({
+          segunda: Object.freeze([
+            Object.freeze({ prato: "Virado à Paulista", preco: 22.00 }),
+            Object.freeze({ prato: "Frango Grelhado com Legumes", preco: 18.00 })
+          ]),
+          terca: Object.freeze([
+            Object.freeze({ prato: "Bife a Cavalo", preco: 25.00 }),
+            Object.freeze({ prato: "Strogonoff de Frango", preco: 20.00 })
+          ]),
+          quarta: Object.freeze([
+            Object.freeze({ prato: "Feijoada Completa", preco: 30.00 }),
+            Object.freeze({ prato: "Panqueca de Carne", preco: 18.00 })
+          ]),
+          quinta: Object.freeze([
+            Object.freeze({ prato: "Lasanha à Bolonhesa", preco: 24.00 }),
+            Object.freeze({ prato: "Filé de Peixe Empanado", preco: 22.00 })
+          ]),
+          sexta: Object.freeze([
+            Object.freeze({ prato: "Bobó de Frango", preco: 23.00 }),
+            Object.freeze({ prato: "Costelinha Suína com Barbecue", preco: 26.00 })
+          ]),
+          sabado: Object.freeze([
+            Object.freeze({ prato: "Churrasco Misto", preco: 28.00 }),
+            Object.freeze({ prato: "Nhoque ao Sugo com Polpetone", preco: 24.00 })
+          ]),
+          domingo: Object.freeze([
+            Object.freeze({ prato: "Frango Assado com Batatas", preco: 25.00 }),
+            Object.freeze({ prato: "Risoto com Carne Seca", preco: 27.00 })
+          ])
+        }),
+        bebidas: Object.freeze([
+          Object.freeze({ item: "Refrigerante Lata 350ml", preco: 6.00 }),
+          Object.freeze({ item: "Suco Natural 500ml", preco: 7.00 }),
+          Object.freeze({ item: "Água Mineral 500ml", preco: 4.00 })
+        ])
+      });
+
+      const NOMES_DIAS_FORMATADOS = Object.freeze({
+        segunda: "Segunda-feira",
+        terca: "Terça-feira",
+        quarta: "Quarta-feira",
+        quinta: "Quinta-feira",
+        sexta: "Sexta-feira",
+        sabado: "Sábado",
+        domingo: "Domingo"
+      });
+
+      /* -------------------------------------------------------------------------
+       * 2. MÁQUINA DE ESTADOS DO PEDIDO (FSM) E CARRINHO EM MEMÓRIA
+       * -------------------------------------------------------------------------
+       * Estados possíveis:
+       * INICIO -> ESCOLHA_PRATO -> PERSONALIZACAO -> BEBIDA -> ENDERECO -> PAGAMENTO -> CONFIRMADO
+       * ------------------------------------------------------------------------- */
+      const ESTADOS = Object.freeze({
+        INICIO: "INICIO",
+        ESCOLHA_PRATO: "ESCOLHA_PRATO",
+        PERSONALIZACAO: "PERSONALIZACAO",
+        BEBIDA: "BEBIDA",
+        ENDERECO: "ENDERECO",
+        PAGAMENTO: "PAGAMENTO",
+        CONFIRMADO: "CONFIRMADO"
+      });
+
+      let estadoPedido = {
+        etapa: ESTADOS.INICIO,
+        pratos: [],        // Ex: [{ nome, preco, quantidade, personalizacao }]
+        bebidas: [],       // Ex: [{ nome, preco, quantidade }]
+        endereco: "",
+        pagamento: "",
+        ultimoPratoIndex: -1
+      };
+
+      function resetarEstadoPedido() {
+        estadoPedido = {
+          etapa: ESTADOS.INICIO,
+          pratos: [],
+          bebidas: [],
+          endereco: "",
+          pagamento: "",
+          ultimoPratoIndex: -1
+        };
+      }
+
+      function formatarMoeda(valor) {
+        return "R$ " + valor.toFixed(2).replace(".", ",");
+      }
+
+      function calcularSubtotal() {
+        const totalPratos = estadoPedido.pratos.reduce((acc, item) => acc + (item.preco * item.quantidade), 0);
+        const totalBebidas = estadoPedido.bebidas.reduce((acc, item) => acc + (item.preco * item.quantidade), 0);
+        return totalPratos + totalBebidas;
+      }
+
+      function gerarResumoPedidoTexto(incluirEnderecoPagamento) {
+        if (estadoPedido.pratos.length === 0) {
+          return "Seu carrinho ainda está vazio.";
+        }
+
+        let linhas = ["🧾 *Resumo do seu Pedido - Marmita Express*\n"];
+
+        estadoPedido.pratos.forEach((p) => {
+          const subtotalItem = p.preco * p.quantidade;
+          const obs = p.personalizacao ? ` _(${p.personalizacao})_` : " _(Padrão da casa)_";
+          linhas.push(`• ${p.quantidade}x *${p.nome}*${obs}: ${formatarMoeda(subtotalItem)}`);
+        });
+
+        if (estadoPedido.bebidas.length > 0) {
+          estadoPedido.bebidas.forEach((b) => {
+            const subtotalBebida = b.preco * b.quantidade;
+            linhas.push(`• ${b.quantidade}x *${b.nome}*: ${formatarMoeda(subtotalBebida)}`);
+          });
+        } else {
+          linhas.push(`• Bebida: _Nenhuma adicionada_`);
+        }
+
+        const subtotal = calcularSubtotal();
+        const taxa = CARDAPIO_OFICIAL.taxaEntrega;
+        const totalFinal = subtotal + taxa;
+
+        linhas.push("");
+        linhas.push(`Subtotal dos itens: ${formatarMoeda(subtotal)}`);
+        linhas.push(`Taxa de Entrega (fixa): ${formatarMoeda(taxa)}`);
+        linhas.push(`*TOTAL FINAL: ${formatarMoeda(totalFinal)}*`);
+
+        if (incluirEnderecoPagamento) {
+          if (estadoPedido.endereco) {
+            linhas.push(`\n📍 *Endereço de Entrega:* ${estadoPedido.endereco}`);
+          }
+          if (estadoPedido.pagamento) {
+            linhas.push(`💳 *Forma de Pagamento:* ${estadoPedido.pagamento}`);
+          }
+        }
+
+        return linhas.join("\n");
+      }
+
+      /* -------------------------------------------------------------------------
+       * 3. PIPELINE DE NLP CLÁSSICO (NORMALIZAÇÃO, TOKENIZAÇÃO, SINÔNIMOS E ENTIDADES)
+       * ------------------------------------------------------------------------- */
+      const NLP = (function () {
+        // Lista de stopwords irrelevantes para filtragem na extração de intenção
+        const STOPWORDS = new Set([
+          "a", "as", "o", "os", "um", "uma", "uns", "umas", "de", "do", "da", "dos", "das",
+          "em", "no", "na", "nos", "nas", "por", "para", "pra", "pro", "com", "que", "se",
+          "e", "ou", "mas", "ai", "la", "ca", "ne", "ta", "to", "estou", "esta", "ser",
+          "foi", "era", "sao", "me", "te", "lhe", "nos", "vos", "meu", "minha", "seu", "sua",
+          "este", "esta", "esse", "essa", "isso", "isto", "aquele", "aquela"
+        ]);
+
+        // Mapa de Sinônimos e Lematização Simples (variações comuns -> termo canônico)
+        const MAPA_SINONIMOS = Object.freeze({
+          // Bebidas
+          "refri": "refrigerante",
+          "refris": "refrigerante",
+          "refrigerantes": "refrigerante",
+          "coca": "refrigerante",
+          "guarana": "refrigerante",
+          "lata": "refrigerante",
+          "latinha": "refrigerante",
+          "sucos": "suco",
+          "suquinho": "suco",
+          "aguas": "agua",
+          "aguinha": "agua",
+          // Pratos e ingredientes
+          "franguinho": "frango",
+          "frangos": "frango",
+          "grelhadinho": "grelhado",
+          "estrogonofe": "strogonoff",
+          "estrogonoff": "strogonoff",
+          "strogonofe": "strogonoff",
+          "feijuca": "feijoada",
+          "panquecas": "panqueca",
+          "lasanhas": "lasanha",
+          "bolonheza": "bolonhesa",
+          "peixinho": "peixe",
+          "filezinho": "file",
+          "bobo": "bobo",
+          "costela": "costelinha",
+          "porco": "suina",
+          "churras": "churrasco",
+          "churrasquinho": "churrasco",
+          "polpetoni": "polpetone",
+          "assadinho": "assado",
+          "batatinha": "batatas",
+          "batata": "batatas",
+          "risotinho": "risoto",
+          "marmitex": "marmita",
+          "marmitinha": "marmita",
+          "quentinha": "marmita",
+          // Dias da semana
+          "seg": "segunda",
+          "ter": "terca",
+          "qua": "quarta",
+          "qui": "quinta",
+          "sex": "sexta",
+          "sab": "sabado",
+          "dom": "domingo",
+          // Pagamentos
+          "credito": "cartao",
+          "debito": "cartao",
+          "maquininha": "cartao",
+          "especie": "dinheiro",
+          "cedula": "dinheiro",
+          "nota": "dinheiro"
+        });
+
+        // Mapa numérico por extenso para extração de quantidades
+        const NUMEROS_EXTENSO = Object.freeze({
+          "um": 1, "uma": 1,
+          "dois": 2, "duas": 2,
+          "tres": 3,
+          "quatro": 4,
+          "cinco": 5,
+          "seis": 6,
+          "sete": 7,
+          "oito": 8,
+          "nove": 9,
+          "dez": 10
+        });
+
+        /**
+         * Etapa 3.1: Normalização
+         * Converte para minúsculas, decompõe acentos/diacríticos (NFD), remove marcas
+         * diacríticas e limpa pontuação desnecessária preservando letras e dígitos.
+         */
+        function normalizar(texto) {
+          if (!texto || typeof texto !== "string") return "";
+          return texto
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/segunda-feira/g, "segunda")
+            .replace(/terca-feira/g, "terca")
+            .replace(/quarta-feira/g, "quarta")
+            .replace(/quinta-feira/g, "quinta")
+            .replace(/sexta-feira/g, "sexta")
+            .replace(/[^\w\s]/g, " ")
+            .replace(/\s+/g, " ")
+            .trim();
+        }
+
+        /**
+         * Etapa 3.2: Tokenização e Lematização Simples
+         * Divide a string normalizada em tokens, aplica o dicionário de sinônimos
+         * e retorna tanto todos os tokens quanto os tokens relevantes (sem stopwords).
+         */
+        function tokenizar(textoNormalizado) {
+          if (!textoNormalizado) {
+            return { tokensBrutos: [], tokensCanonic: [], tokensSemStopwords: [] };
+          }
+          const tokensBrutos = textoNormalizado.split(" ").filter(Boolean);
+          const tokensCanonic = tokensBrutos.map(t => MAPA_SINONIMOS[t] || t);
+          const tokensSemStopwords = tokensCanonic.filter(t => !STOPWORDS.has(t));
+
+          return {
+            tokensBrutos,
+            tokensCanonic,
+            tokensSemStopwords
+          };
+        }
+
+        /**
+         * Etapa 3.3: Extração de Entidades via Tokens
+         * Identifica dias da semana, pratos do CARDAPIO_OFICIAL, bebidas, quantidades,
+         * valores monetários citados, personalizações e formas de pagamento.
+         */
+        function extrairEntidades(textoOriginal, textoNormalizado, tokensCanonic) {
+          const textoCanonic = tokensCanonic.join(" ");
+
+          // 1. Dias da semana
+          const diasReconhecidos = [];
+          const listaDias = ["segunda", "terca", "quarta", "quinta", "sexta", "sabado", "domingo"];
+          listaDias.forEach(dia => {
+            if (tokensCanonic.includes(dia)) {
+              diasReconhecidos.push(dia);
+            }
+          });
+
+          if (tokensCanonic.includes("hoje") || tokensCanonic.includes("dia")) {
+            const mapaJsDia = ["domingo", "segunda", "terca", "quarta", "quinta", "sexta", "sabado"];
+            const diaHoje = mapaJsDia[new Date().getDay()];
+            if (!diasReconhecidos.includes(diaHoje) && tokensCanonic.includes("hoje")) {
+              diasReconhecidos.push(diaHoje);
+            }
+          }
+
+          // 2. Detecção de Valores Monetários (Preços sugeridos/mencionados pelo usuário)
+          // Evita confundir "por 30 reais", "R$ 20", "15 conto" com quantidade de marmitas!
+          const indicesMonetarios = new Set();
+          let valorMonetarioCitado = null;
+
+          // Padrão explícito no texto original/normalizado: "r$ 30", "30 reais", "por 30", "a 20 reais", "30,00"
+          const regexMoeda = /\b(?:r\$\s*(\d+)(?:[.,]\d{2})?|(\d+)(?:[.,]\d{2})?\s*(?:reais|real|conto|contos|pila|pilas|mangos)|(?:por|a|de)\s+(?:r\$\s*)?(\d+)(?:[.,]\d{2})?\s*(?:reais|real|conto|contos|cada)?)\b/gi;
+          let matchMoeda;
+          const numerosMonetarios = new Set();
+
+          while ((matchMoeda = regexMoeda.exec(textoOriginal)) !== null) {
+            const numStr = matchMoeda[1] || matchMoeda[2] || matchMoeda[3];
+            if (numStr) {
+              const val = parseInt(numStr, 10);
+              if (!isNaN(val)) {
+                valorMonetarioCitado = val;
+                numerosMonetarios.add(String(val));
+              }
+            }
+          }
+
+          // Também verifica nos tokens normalizados: número seguido de "reais"/"real"/"conto" ou precedido de "r"/"por"
+          for (let i = 0; i < tokensCanonic.length; i++) {
+            const tk = tokensCanonic[i];
+            const prev = i > 0 ? tokensCanonic[i - 1] : "";
+            const next = i < tokensCanonic.length - 1 ? tokensCanonic[i + 1] : "";
+
+            if (/^\d+$/.test(tk)) {
+              const ehMoedaPorContexto =
+                ["reais", "real", "conto", "contos", "pila", "pilas", "troco"].includes(next) ||
+                ["r", "rs", "por", "troco", "nota", "cedula"].includes(prev) ||
+                numerosMonetarios.has(tk);
+
+              if (ehMoedaPorContexto) {
+                indicesMonetarios.add(i);
+                if (valorMonetarioCitado === null && prev !== "troco" && next !== "troco") {
+                  valorMonetarioCitado = parseInt(tk, 10);
+                }
+              }
+            }
+          }
+
+          // 3. Quantidade solicitada (padrão: 1) — Ignora números que são preços, horas ou endereços
+          let quantidade = 1;
+          for (let i = 0; i < tokensCanonic.length; i++) {
+            if (indicesMonetarios.has(i)) continue;
+
+            const tk = tokensCanonic[i];
+            const prev = i > 0 ? tokensCanonic[i - 1] : "";
+            const next = i < tokensCanonic.length - 1 ? tokensCanonic[i + 1] : "";
+
+            // Ignora números de endereço ("rua X, 30", "numero 30") ou medidas ("350ml", "500ml")
+            if (["numero", "n", "num", "apt", "apto", "casa", "lote", "bloco", "rua", "av", "avenida"].includes(prev)) {
+              continue;
+            }
+            if (["ml", "l", "litros", "g", "kg", "horas", "h", "min", "minutos"].includes(next)) {
+              continue;
+            }
+
+            if (/^\d+$/.test(tk)) {
+              const val = parseInt(tk, 10);
+              if (val >= 1 && val <= 20) {
+                quantidade = val;
+                break;
+              }
+            } else if (NUMEROS_EXTENSO[tk]) {
+              // Se o número por extenso for seguido de "reais"/"conto", também é valor monetário
+              if (["reais", "real", "conto", "contos"].includes(next)) {
+                if (valorMonetarioCitado === null) valorMonetarioCitado = NUMEROS_EXTENSO[tk];
+                continue;
+              }
+              quantidade = NUMEROS_EXTENSO[tk];
+              break;
+            }
+          }
+
+          // 4. Pratos do CARDAPIO_OFICIAL
+          const CatalogoPratos = [
+            { dia: "segunda", item: CARDAPIO_OFICIAL.dias.segunda[0], chaves: [["virado"], ["paulista"]] },
+            { dia: "segunda", item: CARDAPIO_OFICIAL.dias.segunda[1], chaves: [["frango", "grelhado"], ["legumes"]] },
+            { dia: "terca", item: CARDAPIO_OFICIAL.dias.terca[0], chaves: [["bife"], ["cavalo"]] },
+            { dia: "terca", item: CARDAPIO_OFICIAL.dias.terca[1], chaves: [["strogonoff"]] },
+            { dia: "quarta", item: CARDAPIO_OFICIAL.dias.quarta[0], chaves: [["feijoada"]] },
+            { dia: "quarta", item: CARDAPIO_OFICIAL.dias.quarta[1], chaves: [["panqueca"]] },
+            { dia: "quinta", item: CARDAPIO_OFICIAL.dias.quinta[0], chaves: [["lasanha"], ["bolonhesa"]] },
+            { dia: "quinta", item: CARDAPIO_OFICIAL.dias.quinta[1], chaves: [["peixe"], ["empanado"], ["file", "peixe"]] },
+            { dia: "sexta", item: CARDAPIO_OFICIAL.dias.sexta[0], chaves: [["bobo"]] },
+            { dia: "sexta", item: CARDAPIO_OFICIAL.dias.sexta[1], chaves: [["costelinha"], ["suina"], ["barbecue"]] },
+            { dia: "sabado", item: CARDAPIO_OFICIAL.dias.sabado[0], chaves: [["churrasco"], ["misto"]] },
+            { dia: "sabado", item: CARDAPIO_OFICIAL.dias.sabado[1], chaves: [["nhoque"], ["polpetone"], ["sugo"]] },
+            { dia: "domingo", item: CARDAPIO_OFICIAL.dias.domingo[0], chaves: [["frango", "assado"], ["batatas"]] },
+            { dia: "domingo", item: CARDAPIO_OFICIAL.dias.domingo[1], chaves: [["risoto"], ["carne", "seca"]] }
+          ];
+
+          // Verifica se o usuário usou "sem batata(s)" ou "sem legumes" para não confundir personalização negativa com escolha do prato
+          const negouBatata = /\b(?:sem|tirar|retirar|nao\s+quero)\s+batatas?\b/.test(textoNormalizado);
+          const negouLegumes = /\b(?:sem|tirar|retirar|nao\s+quero)\s+legumes\b/.test(textoNormalizado);
+
+          const pratosEncontrados = [];
+          CatalogoPratos.forEach(reg => {
+            const bateu = reg.chaves.some(grupo => {
+              if (grupo.includes("batatas") && negouBatata) return false;
+              if (grupo.includes("legumes") && negouLegumes) return false;
+              return grupo.every(palavra => tokensCanonic.includes(palavra));
+            });
+            if (bateu) {
+              pratosEncontrados.push({
+                nome: reg.item.prato,
+                preco: reg.item.preco,
+                dia: reg.dia
+              });
+            }
+          });
+
+          // Caso o usuário digite apenas "frango" e não especifique qual
+          const frangoGenerico = tokensCanonic.includes("frango") && pratosEncontrados.length === 0;
+
+          // 4. Bebidas do CARDAPIO_OFICIAL
+          const bebidasEncontradas = [];
+          if (tokensCanonic.includes("refrigerante")) {
+            bebidasEncontradas.push(CARDAPIO_OFICIAL.bebidas[0]);
+          }
+          if (tokensCanonic.includes("suco")) {
+            bebidasEncontradas.push(CARDAPIO_OFICIAL.bebidas[1]);
+          }
+          if (tokensCanonic.includes("agua")) {
+            bebidasEncontradas.push(CARDAPIO_OFICIAL.bebidas[2]);
+          }
+
+          // 5. Personalizações gastronômicas
+          const padroesPersonalizacao = [
+            { regex: /\bsem\s+cebola\b/, label: "Sem cebola" },
+            { regex: /\bsem\s+alho\b/, label: "Sem alho" },
+            { regex: /\bsem\s+sal\b|\bpouco\s+sal\b|\bmenos\s+sal\b/, label: "Pouco/sem sal" },
+            { regex: /\bsem\s+feijao\b/, label: "Sem feijão" },
+            { regex: /\bfeijao\s+separado\b|\bfeijao\s+a\s+parte\b/, label: "Feijão separado" },
+            { regex: /\barroz\s+integral\b|\btrocar?\s+arroz\b/, label: "Arroz integral" },
+            { regex: /\bsem\s+arroz\b/, label: "Sem arroz" },
+            { regex: /\bbem\s+passad[oa]\b/, label: "Carne bem passada" },
+            { regex: /\bmal\s+passad[oa]\b/, label: "Carne mal passada" },
+            { regex: /\bao\s+ponto\b/, label: "Carne ao ponto" },
+            { regex: /\bsem\s+pimenta\b/, label: "Sem pimenta" },
+            { regex: /\bsem\s+molho\b/, label: "Sem molho" },
+            { regex: /\bsem\s+batata\b|\bsem\s+batatas\b/, label: "Sem batatas" },
+            { regex: /\bsem\s+legumes\b/, label: "Sem legumes" }
+          ];
+
+          const personalizacoes = [];
+          padroesPersonalizacao.forEach(p => {
+            if (p.regex.test(textoNormalizado)) {
+              personalizacoes.push(p.label);
+            }
+          });
+
+          // Captura genérica "sem X" ou "retirar X" se não bateu acima
+          if (personalizacoes.length === 0) {
+            const matchSem = textoNormalizado.match(/\b(?:sem|tirar|retirar|tira|retire)\s+([a-z]{3,15})\b/);
+            if (matchSem && !["bebida", "refrigerante", "suco", "agua", "nada", "personalizacao", "alteracao"].includes(matchSem[1])) {
+              personalizacoes.push("Sem " + matchSem[1]);
+            }
+          }
+
+          // 6. Forma de Pagamento
+          let pagamento = null;
+          if (tokensCanonic.includes("pix")) {
+            pagamento = "Pix";
+          } else if (tokensCanonic.includes("cartao")) {
+            if (textoNormalizado.includes("debito")) {
+              pagamento = "Cartão de Débito";
+            } else if (textoNormalizado.includes("credito")) {
+              pagamento = "Cartão de Crédito";
+            } else {
+              pagamento = "Cartão (Crédito/Débito)";
+            }
+          } else if (tokensCanonic.includes("dinheiro") || tokensCanonic.includes("troco")) {
+            const matchTroco = textoOriginal.match(/troco\s+(?:para|pra)\s+([0-9.,]+|\w+)/i);
+            pagamento = matchTroco ? `Dinheiro (Troco para R$ ${matchTroco[1]})` : "Dinheiro";
+          }
+
+          return {
+            dias: diasReconhecidos,
+            quantidade,
+            valorMonetarioCitado,
+            pratos: pratosEncontrados,
+            frangoGenerico,
+            bebidas: bebidasEncontradas,
+            personalizacoes,
+            pagamento,
+            textoCanonic
+          };
+        }
+
+        function processarEntrada(textoUsuario) {
+          const textoNormalizado = normalizar(textoUsuario);
+          const { tokensBrutos, tokensCanonic, tokensSemStopwords } = tokenizar(textoNormalizado);
+          const entidades = extrairEntidades(textoUsuario, textoNormalizado, tokensCanonic);
+
+          return {
+            textoOriginal: textoUsuario.trim(),
+            textoNormalizado,
+            tokensBrutos,
+            tokensCanonic,
+            tokensSemStopwords,
+            entidades
+          };
+        }
+
+        return Object.freeze({
+          normalizar,
+          tokenizar,
+          extrairEntidades,
+          processarEntrada
+        });
+      })();
+
+      /* -------------------------------------------------------------------------
+       * 4. MOTOR INSPIRADO NO ELIZA (1960) + REGRAS COM PRIORIDADE E GUARDRAILS
+       * ------------------------------------------------------------------------- */
+      const MotorEliza = (function () {
+        /**
+         * Reflexão de Pronomes clássica do ELIZA (Weizenbaum, 1966):
+         * Inverte a perspectiva da 1ª pessoa (usuário) para a 2ª pessoa (atendente)
+         * ao reutilizar fragmentos capturados na fala do cliente.
+         */
+        const MAPA_REFLEXAO = Object.freeze({
+          "eu": "você",
+          "meu": "seu",
+          "minha": "sua",
+          "meus": "seus",
+          "minhas": "suas",
+          "mim": "você",
+          "comigo": "com você",
+          "estou": "está",
+          "to": "está",
+          "sou": "é",
+          "quero": "quer",
+          "prefiro": "prefere",
+          "gosto": "gosta",
+          "acho": "acha",
+          "tenho": "tem",
+          "posso": "pode",
+          "fui": "foi",
+          "voce": "eu",
+          "você": "eu",
+          "seu": "meu",
+          "sua": "minha"
+        });
+
+        function refletirPronomes(trecho) {
+          if (!trecho) return "";
+          const limpo = trecho
+            .trim()
+            .replace(/[?!.;,]+$/g, "");
+
+          const palavras = limpo.split(/\s+/);
+          const refletidas = palavras.map(p => {
+            const chave = p.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            return MAPA_REFLEXAO[chave] || p;
+          });
+          return refletidas.join(" ");
+        }
+
+        // Formatação do Cardápio Completo ou por Dia
+        function formatarCardapioDia(diaChave) {
+          const nomeDia = NOMES_DIAS_FORMATADOS[diaChave];
+          const opcoes = CARDAPIO_OFICIAL.dias[diaChave];
+          if (!opcoes) return "";
+          let str = `📅 *${nomeDia}:*\n`;
+          opcoes.forEach(item => {
+            str += `  • *${item.prato}* — ${formatarMoeda(item.preco)}\n`;
+          });
+          return str.trim();
+        }
+
+        function formatarCardapioCompleto() {
+          let blocos = ["🍱 *Cardápio Oficial - Marmita Express*\n"];
+          Object.keys(CARDAPIO_OFICIAL.dias).forEach(dia => {
+            blocos.push(formatarCardapioDia(dia));
+          });
+          blocos.push("\n🥤 *Bebidas Opcionais:*");
+          CARDAPIO_OFICIAL.bebidas.forEach(b => {
+            blocos.push(`  • *${b.item}* — ${formatarMoeda(b.preco)}`);
+          });
+          blocos.push(`\n🛵 *Taxa de entrega fixa:* ${formatarMoeda(CARDAPIO_OFICIAL.taxaEntrega)}`);
+          blocos.push("\nQual prato você gostaria de pedir hoje?");
+          return blocos.join("\n");
+        }
+
+        function formatarCardapioBebidas() {
+          let linhas = ["🥤 *Nossas opções de bebida:*\n"];
+          CARDAPIO_OFICIAL.bebidas.forEach(b => {
+            linhas.push(`• *${b.item}* — ${formatarMoeda(b.preco)}`);
+          });
+          linhas.push("\nDeseja adicionar alguma bebida ou prefere seguir sem bebida?");
+          return linhas.join("\n");
+        }
+
+        /**
+         * Adiciona um prato ao carrinho e transiciona a Máquina de Estados para PERSONALIZACAO.
+         * Caso o cliente tenha citado um dia da semana diferente do dia oficial do prato,
+         * ou tenha sugerido um preço diferente do preço fixo oficial, esclarece educadamente.
+         */
+        function registrarPratoNoCarrinho(pratoInfo, quantidade, personalizacoesJaInformadas, diasCitados, valorMonetarioCitado) {
+          const obsInicial = personalizacoesJaInformadas && personalizacoesJaInformadas.length > 0
+            ? personalizacoesJaInformadas.join(", ")
+            : "";
+
+          const avisosContextuais = [];
+
+          // 1. Verifica se o usuário pediu um prato em um dia diferente do cardápio oficial daquele prato
+          if (diasCitados && diasCitados.length > 0 && !diasCitados.includes(pratoInfo.dia)) {
+            const diaPedidoNome = NOMES_DIAS_FORMATADOS[diasCitados[0]] || diasCitados[0];
+            const diaPratoNome = NOMES_DIAS_FORMATADOS[pratoInfo.dia] || pratoInfo.dia;
+            const opcoesDoDiaPedido = (CARDAPIO_OFICIAL.dias[diasCitados[0]] || [])
+              .map(p => `*${p.prato}* (${formatarMoeda(p.preco)})`)
+              .join(" ou ");
+
+            avisosContextuais.push(
+              `📅 *Observação sobre o dia:* O prato *${pratoInfo.nome}* faz parte do nosso cardápio de *${diaPratoNome}* (na *${diaPedidoNome}*, as opções do dia são ${opcoesDoDiaPedido}). Mesmo assim, podemos preparar o *${pratoInfo.nome}* para você!`
+            );
+          }
+
+          // 2. Verifica se o usuário citou um valor em reais diferente do preço oficial fixo
+          if (valorMonetarioCitado !== null && valorMonetarioCitado !== undefined && valorMonetarioCitado !== pratoInfo.preco) {
+            avisosContextuais.push(
+              `💰 *Observação sobre o valor:* Você mencionou *${formatarMoeda(valorMonetarioCitado)}*, porém nossos preços são fixos conforme a tabela oficial e o valor unitário do *${pratoInfo.nome}* é *${formatarMoeda(pratoInfo.preco)}*.`
+            );
+          }
+
+          const blocoAvisos = avisosContextuais.length > 0
+            ? avisosContextuais.join("\n\n") + "\n\n"
+            : "";
+
+          estadoPedido.pratos.push({
+            nome: pratoInfo.nome,
+            preco: pratoInfo.preco,
+            quantidade: quantidade || 1,
+            personalizacao: obsInicial
+          });
+          estadoPedido.ultimoPratoIndex = estadoPedido.pratos.length - 1;
+
+          // Se o cliente já informou a personalização junto com o prato, avança para BEBIDA
+          if (obsInicial) {
+            estadoPedido.etapa = ESTADOS.BEBIDA;
+            return (
+              blocoAvisos +
+              `Excelente escolha! Anotei *${quantidade || 1}x ${pratoInfo.nome}* (${formatarMoeda(pratoInfo.preco)} cada) com a observação: _${obsInicial}_. ✅\n\n` +
+              `Deseja adicionar alguma *bebida* para acompanhar?\n` +
+              `• *Refrigerante Lata 350ml* (R$ 6,00)\n` +
+              `• *Suco Natural 500ml* (R$ 7,00)\n` +
+              `• *Água Mineral 500ml* (R$ 4,00)\n\n` +
+              `_(Ou digite "sem bebida" para prosseguir)_`
+            );
+          }
+
+          estadoPedido.etapa = ESTADOS.PERSONALIZACAO;
+          return (
+            blocoAvisos +
+            `Ótima pedida! Anotei *${quantidade || 1}x ${pratoInfo.nome}* (${formatarMoeda(pratoInfo.preco)} cada). 🍛\n\n` +
+            `Você deseja *personalizar* sua marmita? (Ex: _sem cebola, arroz integral, feijão separado, pouco sal, ponto da carne_ ou digite *"normal"* / *"sem alteração"*).`
+          );
+        }
+
+        /**
+         * TABELA DE REGRAS HIERÁRQUICAS (ESTILO ELIZA - ORDENADAS POR RANK / PRIORIDADE)
+         * Cada regra possui:
+         * - id: identificador interno
+         * - rank: prioridade numérica (maior vence)
+         * - match(analise): função booleana que verifica tokens/regex/estado
+         * - responder(analise): realiza decomposição/reassemblagem e retorna a resposta
+         */
+        const REGRAS_PRIORITARIAS = [
+          // RANK 100: GUARDRAIL - TENTATIVA DE ALTERAR REGRAS, PREÇOS OU DESCONTO (SEM ESCOLHA DIRETA DE PRATO)
+          {
+            id: "GUARDRAIL_PRECO_DESCONTO",
+            rank: 100,
+            match: function (a) {
+              const padraoDesconto = /\b(desconto|descontinho|cupom|promocao|mais\s+barato|de\s+graca|gratis|fiado|abaixar?\s+o?\s*preco|mudar?\s+o?\s*preco|alterar?\s+o?\s*valor|sem\s+taxa|tirar?\s+a?\s*taxa|frete\s+gratis)\b/;
+              if (padraoDesconto.test(a.textoNormalizado)) return true;
+
+              // Se o cliente tentar impor um preço ("faz por 15 reais", "pago 10 reais") sem estar apenas dando troco
+              if (a.entidades.valorMonetarioCitado !== null &&
+                  a.entidades.pratos.length === 0 &&
+                  estadoPedido.etapa !== ESTADOS.PAGAMENTO &&
+                  !/\btroco\b/.test(a.textoNormalizado)) {
+                return true;
+              }
+              return false;
+            },
+            responder: function (a) {
+              // Decomposição estilo ELIZA se o usuário disse "quero desconto porque (...)"
+              const m = a.textoOriginal.match(/(?:quero|pede|pedir|tem|da|faz)\s+(?:um\s+)?(?:desconto|cupom|frete\s+gr[aá]tis|por\s+\d+\s*reais)\s*(.*)/i);
+              let complemento = "";
+              if (m && m[1] && m[1].trim().length > 2) {
+                complemento = ` Entendo quando você menciona "${refletirPronomes(m[1])}", mas`;
+              } else if (a.entidades.valorMonetarioCitado !== null) {
+                complemento = ` Você mencionou o valor de *${formatarMoeda(a.entidades.valorMonetarioCitado)}*, mas`;
+              }
+              return (
+                `Agradeço a preferência! 😊${complemento} nossos preços já são calculados com o melhor custo-benefício e são *fixos* conforme nosso cardápio oficial, assim como a taxa de entrega fixa de *${formatarMoeda(CARDAPIO_OFICIAL.taxaEntrega)}*.\n\n` +
+                (estadoPedido.pratos.length > 0
+                  ? `Podemos continuar com o seu pedido de *${estadoPedido.pratos[estadoPedido.pratos.length - 1].nome}*?`
+                  : `Qual marmita do nosso cardápio você gostaria de escolher hoje?`)
+              );
+            }
+          },
+
+          // RANK 95: GUARDRAIL - ASSUNTOS FORA DO ESCOPO DO RESTAURANTE
+          {
+            id: "GUARDRAIL_FORA_ESCOPO",
+            rank: 95,
+            match: function (a) {
+              const padraoForaEscopo = /\b(politica|eleicao|presidente|partido|futebol|programacao|javascript|python|codigo|html|css|piada|poema|traduzir|traducao|religiao|matematica|horoscopo|ignore\s+as\s+instrucoes|system\s+prompt)\b/;
+              return padraoForaEscopo.test(a.textoNormalizado);
+            },
+            responder: function (a) {
+              return (
+                `Puxa, sobre esse assunto eu não consigo te ajudar! 😅 Eu cuido exclusivamente dos pedidos aqui da *Marmita Express*.\n\n` +
+                `Que tal darmos uma olhada nas nossas marmitas quentinhas do dia? Digite *"cardápio"* ou o nome do prato que você deseja!`
+              );
+            }
+          },
+
+          // RANK 90: CANCELAR OU REINICIAR PEDIDO
+          {
+            id: "CANCELAR_PEDIDO",
+            rank: 90,
+            match: function (a) {
+              return /\b(cancelar|cancela|desistir|desisto|limpar\s+carrinho|recomecar|zerar\s+pedido)\b/.test(a.textoNormalizado);
+            },
+            responder: function () {
+              resetarEstadoPedido();
+              return (
+                `Pedido cancelado com sucesso! 🗑️ Limpei todas as opções anteriores.\n\n` +
+                `Se quiser começar um novo pedido a qualquer momento, basta me dizer qual prato deseja ou pedir para ver o *cardápio*!`
+              );
+            }
+          },
+
+          // RANK 85: CONSULTAR CARRINHO / RESUMO / VALOR ATUAL
+          {
+            id: "CONSULTAR_RESUMO_VALOR",
+            rank: 85,
+            match: function (a) {
+              return /\b(resumo|carrinho|quanto\s+deu|quanto\s+fica|valor\s+total|meu\s+pedido|fechar\s+conta)\b/.test(a.textoNormalizado) &&
+                     estadoPedido.pratos.length > 0 &&
+                     estadoPedido.etapa !== ESTADOS.ENDERECO;
+            },
+            responder: function () {
+              const resumo = gerarResumoPedidoTexto(true);
+              let proximoPasso = "";
+              if (estadoPedido.etapa === ESTADOS.PERSONALIZACAO) {
+                proximoPasso = "\n\n👉 Você gostaria de personalizar seu prato (ex: _sem cebola, arroz integral_) ou prefere o padrão da casa?";
+              } else if (estadoPedido.etapa === ESTADOS.BEBIDA) {
+                proximoPasso = "\n\n👉 Deseja adicionar alguma bebida ou podemos ir para o endereço de entrega?";
+              } else if (!estadoPedido.endereco) {
+                estadoPedido.etapa = ESTADOS.ENDERECO;
+                proximoPasso = "\n\n📍 Por favor, informe o seu *endereço completo de entrega* (Rua, número e bairro):";
+              } else if (!estadoPedido.pagamento) {
+                estadoPedido.etapa = ESTADOS.PAGAMENTO;
+                proximoPasso = "\n\n💳 Qual será a *forma de pagamento* (*Pix*, *Cartão* ou *Dinheiro*)?";
+              }
+              return resumo + proximoPasso;
+            }
+          },
+
+          // RANK 82: CONFLITO ENTRE PRATO E DIA DA SEMANA OU TENTATIVA DE DEFINIR PREÇO DO PRATO
+          // Ex: "frango com batata na segunda por 30 reais" -> Frango Assado com Batatas é de Domingo (R$ 25,00), não de Segunda (Frango Grelhado com Legumes R$ 18,00), e não custa R$ 30,00!
+          {
+            id: "VALIDAR_CONFLITO_DIA_E_PRECO_DO_PRATO",
+            rank: 82,
+            match: function (a) {
+              if (a.entidades.pratos.length === 0) return false;
+              const prato = a.entidades.pratos[0];
+              const conflitoDia = a.entidades.dias.length > 0 && !a.entidades.dias.includes(prato.dia);
+              const conflitoPreco = a.entidades.valorMonetarioCitado !== null && a.entidades.valorMonetarioCitado !== prato.preco;
+              return conflitoDia || conflitoPreco;
+            },
+            responder: function (a) {
+              const prato = a.entidades.pratos[0];
+              const qtd = a.entidades.quantidade || 1;
+              const conflitoDia = a.entidades.dias.length > 0 && !a.entidades.dias.includes(prato.dia);
+              const conflitoPreco = a.entidades.valorMonetarioCitado !== null && a.entidades.valorMonetarioCitado !== prato.preco;
+
+              // Se houve conflito de DIA (ex: pediu "frango com batata na segunda"), NÃO adiciona errado ao carrinho:
+              // esclarece o dia oficial do prato, mostra as opções reais do dia citado e pergunta qual o cliente prefere!
+              if (conflitoDia) {
+                estadoPedido.etapa = ESTADOS.ESCOLHA_PRATO;
+                const diaCitadoChave = a.entidades.dias[0];
+                const nomeDiaCitado = NOMES_DIAS_FORMATADOS[diaCitadoChave];
+                const nomeDiaPrato = NOMES_DIAS_FORMATADOS[prato.dia];
+                const pratosDoDiaCitado = CARDAPIO_OFICIAL.dias[diaCitadoChave] || [];
+
+                let msg = `⚠️ *Atenção ao nosso cardápio:*\n\n`;
+                msg += `• O prato *${prato.nome}* (${formatarMoeda(prato.preco)}) é servido exclusivamente no cardápio de *${nomeDiaPrato}*.\n`;
+                msg += `• Na *${nomeDiaCitado}*, nossas opções são:\n`;
+                pratosDoDiaCitado.forEach(p => {
+                  msg += `  — *${p.prato}* (${formatarMoeda(p.preco)})\n`;
+                });
+
+                if (conflitoPreco) {
+                  msg += `\n💰 *Sobre o valor:* Você mencionou *${formatarMoeda(a.entidades.valorMonetarioCitado)}*, mas nossos preços são fixos conforme a tabela oficial acima (não alteramos o valor unitário dos pratos).`;
+                }
+
+                msg += `\n\n👉 Qual desses pratos você gostaria de confirmar para o seu pedido?`;
+                return msg;
+              }
+
+              // Se o dia está correto (ou não foi citado), mas o cliente tentou impor um preço diferente (ex: "quero feijoada por 15 reais" ou "frango com batata por 30 reais")
+              return registrarPratoNoCarrinho(
+                prato,
+                qtd,
+                a.entidades.personalizacoes,
+                a.entidades.dias,
+                a.entidades.valorMonetarioCitado
+              );
+            }
+          },
+
+          // RANK 80: ESCOLHA EXPLÍCITA DE PRATO DO CARDÁPIO
+          {
+            id: "ESCOLHA_DE_PRATO",
+            rank: 80,
+            match: function (a) {
+              return a.entidades.pratos.length > 0;
+            },
+            responder: function (a) {
+              const pratoEscolhido = a.entidades.pratos[0];
+              const qtd = a.entidades.quantidade || 1;
+              return registrarPratoNoCarrinho(
+                pratoEscolhido,
+                qtd,
+                a.entidades.personalizacoes,
+                a.entidades.dias,
+                a.entidades.valorMonetarioCitado
+              );
+            }
+          },
+
+          // RANK 78: MENÇÃO GENÉRICA A "FRANGO" (DESAMBIGUAÇÃO ENTRE OS 4 PRATOS DE FRANGO)
+          {
+            id: "DESAMBIGUAR_FRANGO",
+            rank: 78,
+            match: function (a) {
+              return a.entidades.frangoGenerico && estadoPedido.etapa !== ESTADOS.ENDERECO;
+            },
+            responder: function () {
+              estadoPedido.etapa = ESTADOS.ESCOLHA_PRATO;
+              return (
+                `Temos *4 opções deliciosas com frango* no nosso cardápio! Qual delas você prefere?\n\n` +
+                `• *Frango Grelhado com Legumes* (Segunda) — R$ 18,00\n` +
+                `• *Strogonoff de Frango* (Terça) — R$ 20,00\n` +
+                `• *Bobó de Frango* (Sexta) — R$ 23,00\n` +
+                `• *Frango Assado com Batatas* (Domingo) — R$ 25,00\n\n` +
+                `Digite o nome de qual você gostaria de pedir!`
+              );
+            }
+          },
+
+          // RANK 75: CONSULTA DE CARDÁPIO POR DIA ESPECÍFICO
+          {
+            id: "CARDAPIO_POR_DIA",
+            rank: 75,
+            match: function (a) {
+              return a.entidades.dias.length > 0 && a.entidades.pratos.length === 0 && estadoPedido.etapa !== ESTADOS.ENDERECO;
+            },
+            responder: function (a) {
+              if (estadoPedido.etapa === ESTADOS.INICIO) {
+                estadoPedido.etapa = ESTADOS.ESCOLHA_PRATO;
+              }
+              const blocos = a.entidades.dias.map(d => formatarCardapioDia(d));
+              return (
+                `Aqui estão as opções para o dia solicitado:\n\n` +
+                blocos.join("\n\n") +
+                `\n\n🛵 _Taxa de entrega fixa: ${formatarMoeda(CARDAPIO_OFICIAL.taxaEntrega)}_\n` +
+                `Qual desses pratos você gostaria de pedir?`
+              );
+            }
+          },
+
+          // RANK 72: CONSULTA DO CARDÁPIO COMPLETO OU PREÇOS
+          {
+            id: "VER_CARDAPIO_COMPLETO",
+            rank: 72,
+            match: function (a) {
+              return /\b(cardapio|menu|opcoes|pratos|precos|tabela|o\s+que\s+tem|quais\s+as\s+marmitas|ver\s+marmitas)\b/.test(a.textoNormalizado) &&
+                     estadoPedido.etapa !== ESTADOS.ENDERECO;
+            },
+            responder: function () {
+              if (estadoPedido.etapa === ESTADOS.INICIO) {
+                estadoPedido.etapa = ESTADOS.ESCOLHA_PRATO;
+              }
+              return formatarCardapioCompleto();
+            }
+          }
+        ];
+
+        /**
+         * PROCESSAMENTO CONTEXTUAL DA MÁQUINA DE ESTADOS (QUANDO NENHUMA REGRA GLOBAL DE TOPO DISPAROU)
+         */
+        function processarPorEstado(a) {
+          const txtNorm = a.textoNormalizado;
+          const tokens = a.tokensCanonic;
+
+          // ESTADO: PERSONALIZACAO
+          if (estadoPedido.etapa === ESTADOS.PERSONALIZACAO) {
+            const idx = estadoPedido.ultimoPratoIndex;
+            const pratoAtual = estadoPedido.pratos[idx];
+
+            // Usuário não quer personalização ("não", "normal", "padrão", "assim mesmo", "nada")
+            const recusaPersonalizacao = /\b(nao|normal|padrao|assim\s+mesmo|sem\s+alteracao|sem\s+personalizacao|nada|completo|pode\s+ser\s+normal|tudo\s+normal)\b/.test(txtNorm);
+
+            if (a.entidades.personalizacoes.length > 0) {
+              pratoAtual.personalizacao = a.entidades.personalizacoes.join(", ");
+              estadoPedido.etapa = ESTADOS.BEBIDA;
+              return (
+                `Perfeito! Anotei a personalização do seu *${pratoAtual.nome}*: _${pratoAtual.personalizacao}_. ✍️\n\n` +
+                formatarCardapioBebidas()
+              );
+            }
+
+            if (recusaPersonalizacao) {
+              pratoAtual.personalizacao = "Padrão da casa";
+              estadoPedido.etapa = ESTADOS.BEBIDA;
+              return (
+                `Combinado! Seu *${pratoAtual.nome}* será preparado no capricho seguindo o padrão tradicional da casa. 👌\n\n` +
+                formatarCardapioBebidas()
+              );
+            }
+
+            // Decomposição estilo ELIZA para capturar qualquer observação livre do cliente (ex: "eu não gosto de cebola", "quero com batata extra")
+            let obsLivre = a.textoOriginal;
+            const matchPref = a.textoOriginal.match(/(?:eu\s+)?(?:quero|prefiro|gostaria\s+de|coloca|faz|deixa|sem|tira)\s+(.*)/i);
+            if (matchPref && matchPref[1]) {
+              obsLivre = a.textoOriginal.trim();
+            }
+
+            if (obsLivre.length >= 3 && obsLivre.length <= 80) {
+              pratoAtual.personalizacao = obsLivre;
+              estadoPedido.etapa = ESTADOS.BEBIDA;
+              return (
+                `Anotado! Registrei sua observação na cozinha: _"${obsLivre}"_. 👨‍🍳\n\n` +
+                formatarCardapioBebidas()
+              );
+            }
+          }
+
+          // ESTADO: BEBIDA
+          if (estadoPedido.etapa === ESTADOS.BEBIDA) {
+            // Cliente escolheu uma bebida
+            if (a.entidades.bebidas.length > 0) {
+              const qtdBebida = a.entidades.quantidade || 1;
+              a.entidades.bebidas.forEach(b => {
+                estadoPedido.bebidas.push({
+                  nome: b.item,
+                  preco: b.preco,
+                  quantidade: qtdBebida
+                });
+              });
+              estadoPedido.etapa = ESTADOS.ENDERECO;
+              const nomesBebidas = a.entidades.bebidas.map(b => `${qtdBebida}x *${b.item}*`).join(" e ");
+              return (
+                `Adicionei ${nomesBebidas} ao seu pedido! 🥤\n\n` +
+                gerarResumoPedidoTexto(false) +
+                `\n\n📍 Agora, por favor, digite o seu *endereço completo para entrega* (Rua, número, complemento e bairro):`
+              );
+            }
+
+            // Cliente não quer bebida ("não", "só a marmita", "sem bebida", "obrigado")
+            if (/\b(nao|sem\s+bebida|so\s+a\s+marmita|so\s+isso|nenhuma|dispenso|obrigad[oa]|prosseguir|fechar)\b/.test(txtNorm)) {
+              estadoPedido.etapa = ESTADOS.ENDERECO;
+              return (
+                `Tudo bem, seguimos sem bebida! 👍\n\n` +
+                gerarResumoPedidoTexto(false) +
+                `\n\n📍 Para entregarmos sua refeição quentinha, qual é o seu *endereço completo de entrega* (Rua, número e bairro)?`
+              );
+            }
+
+            // Cliente disse apenas "sim" ou "quero" sem especificar qual bebida
+            if (/\b(sim|quero|claro|pode\s+ser|com\s+certeza|adicionar\s+bebida)\b/.test(txtNorm)) {
+              return (
+                `Ótimo! Qual das nossas bebidas você prefere?\n` +
+                `• *Refrigerante Lata 350ml* — R$ 6,00\n` +
+                `• *Suco Natural 500ml* — R$ 7,00\n` +
+                `• *Água Mineral 500ml* — R$ 4,00`
+              );
+            }
+          }
+
+          // ESTADO: ENDERECO
+          if (estadoPedido.etapa === ESTADOS.ENDERECO) {
+            // Valida se o texto parece um endereço ou tem tamanho suficiente
+            if (a.textoOriginal.length >= 6 && !/\b(pix|cartao|dinheiro)\b/.test(txtNorm)) {
+              estadoPedido.endereco = a.textoOriginal;
+              estadoPedido.etapa = ESTADOS.PAGAMENTO;
+              return (
+                `Endereço registrado com sucesso: 📍 *${estadoPedido.endereco}*\n\n` +
+                `Para finalizar, qual será a *forma de pagamento*?\n` +
+                `Aceitamos:\n` +
+                `• *Pix*\n` +
+                `• *Cartão de Crédito ou Débito* (levamos a maquininha)\n` +
+                `• *Dinheiro* (informe se precisar de troco)`
+              );
+            }
+
+            // Se o usuário já mandou endereço + forma de pagamento na mesma frase
+            if (a.entidades.pagamento && a.textoOriginal.length >= 12) {
+              estadoPedido.endereco = a.textoOriginal;
+              estadoPedido.pagamento = a.entidades.pagamento;
+              estadoPedido.etapa = ESTADOS.CONFIRMADO;
+              return (
+                `🎉 *Pedido Confirmado com Sucesso!*\n\n` +
+                gerarResumoPedidoTexto(true) +
+                `\n\n👨‍🍳 Sua marmita já entrou em preparo e sairá para entrega em instantes! Muito obrigado por pedir na *Marmita Express*!`
+              );
+            }
+
+            return `Por gentileza, informe o seu *endereço completo* (com nome da rua e número) para que nosso entregador possa levar seu pedido:`;
+          }
+
+          // ESTADO: PAGAMENTO
+          if (estadoPedido.etapa === ESTADOS.PAGAMENTO) {
+            if (a.entidades.pagamento) {
+              estadoPedido.pagamento = a.entidades.pagamento;
+              estadoPedido.etapa = ESTADOS.CONFIRMADO;
+              return (
+                `🎉 *Pedido Confirmado com Sucesso!*\n\n` +
+                gerarResumoPedidoTexto(true) +
+                `\n\n🛵 Nossa cozinha já está preparando sua refeição com todo carinho! Tempo estimado de entrega: *30 a 45 minutos*.\n` +
+                `Agradecemos a preferência! Bom apetite! 🍱`
+              );
+            }
+
+            return (
+              `Como você prefere realizar o pagamento na entrega?\n` +
+              `Por favor, escolha entre *Pix*, *Cartão* (crédito/débito) ou *Dinheiro*.`
+            );
+          }
+
+          // ESTADO: CONFIRMADO
+          if (estadoPedido.etapa === ESTADOS.CONFIRMADO) {
+            if (/\b(obrigad[oa]|valeu|top|show|beleza|ok|perfeito)\b/.test(txtNorm)) {
+              return `Por nada! É um prazer atender você na *Marmita Express*! 😊 Se precisar fazer outro pedido, é só me chamar!`;
+            }
+            if (/\b(novo\s+pedido|outro\s+pedido|pedir\s+mais|adicionar)\b/.test(txtNorm)) {
+              resetarEstadoPedido();
+              estadoPedido.etapa = ESTADOS.ESCOLHA_PRATO;
+              return `Claro! Vamos iniciar um novo pedido. Qual prato do nosso cardápio você deseja agora?`;
+            }
+            return (
+              `Seu pedido já está confirmado e sendo preparado para entrega em *${estadoPedido.endereco}*! 🛵\n\n` +
+              `Se desejar iniciar um *novo pedido*, digite *"novo pedido"* ou clique no botão de reiniciar no topo da tela.`
+            );
+          }
+
+          // Caso mencione bebida fora do estado BEBIDA (ex: no início ou durante escolha de prato)
+          if (a.entidades.bebidas.length > 0) {
+            const qtdBebida = a.entidades.quantidade || 1;
+            a.entidades.bebidas.forEach(b => {
+              estadoPedido.bebidas.push({
+                nome: b.item,
+                preco: b.preco,
+                quantidade: qtdBebida
+              });
+            });
+            const nomesBebidas = a.entidades.bebidas.map(b => `${qtdBebida}x *${b.item}*`).join(" e ");
+            if (estadoPedido.pratos.length === 0) {
+              estadoPedido.etapa = ESTADOS.ESCOLHA_PRATO;
+              return (
+                `Já deixei anotado ${nomesBebidas} no seu pedido! 🥤\n\n` +
+                `E qual *marmita* você gostaria de escolher para acompanhar? (Digite *"cardápio"* se quiser ver todas as opções da semana).`
+              );
+            }
+          }
+
+          // Saudações e Agradecimentos gerais
+          if (/\b(oi|ola|bom\s+dia|boa\s+tarde|boa\s+noite|opa|e\s+ai|salve|tudo\s+bem)\b/.test(txtNorm)) {
+            if (estadoPedido.etapa === ESTADOS.INICIO) {
+              estadoPedido.etapa = ESTADOS.ESCOLHA_PRATO;
+            }
+            return (
+              `Olá! Que alegria atender você na *Marmita Express*! 😊🍱\n\n` +
+              `Você gostaria de ver o nosso *cardápio completo*, consultar um *dia da semana* específico (ex: _segunda, quarta, sábado_) ou já sabe qual prato vai pedir hoje?`
+            );
+          }
+
+          if (/\b(obrigad[oa]|valeu|agradecido)\b/.test(txtNorm)) {
+            return `Imagina, eu que agradeço! 😊 Como posso te ajudar com sua marmita agora?`;
+          }
+
+          if (/\b(entrega|taxa|frete|demora|tempo)\b/.test(txtNorm)) {
+            return (
+              `🛵 Nossa *taxa de entrega é fixa em ${formatarMoeda(CARDAPIO_OFICIAL.taxaEntrega)}* para qualquer endereço, e o tempo médio de entrega é de 30 a 45 minutos.\n\n` +
+              `Qual prato do nosso cardápio vamos preparar para você hoje?`
+            );
+          }
+
+          return null;
+        }
+
+        /**
+         * DECOMPOSIÇÃO E REASSEMBLAGEM (FALLBACK ESTILO ELIZA - WEIZENBAUM 1966)
+         * Quando o usuário digita uma frase que não aciona diretamente um prato ou comando,
+         * o motor decompõe a estrutura da frase via expressões regulares, aplica reflexão
+         * pronominal (eu/meu -> você/seu) e reconstrói uma resposta empática que redireciona
+         * cordialmente o cliente para o cardápio da Marmita Express.
+         */
+        const PADROES_DECOMPOSICAO_ELIZA = [
+          {
+            // Ex: "Eu quero comer algo leve" / "Gostaria de pedir (...)"
+            regex: /(?:eu\s+)?(?:quero|gostaria\s+de|prefiro|estou\s+afim\s+de|queria)\s+(.*)/i,
+            reassemblar: function (captura) {
+              const refletido = refletirPronomes(captura);
+              return (
+                `Entendo que você queira *${refletido}*! 😋 Aqui na *Marmita Express* trabalhamos exclusivamente com os pratos do nosso cardápio diário.\n\n` +
+                `Se quiser uma sugestão leve, temos o *Frango Grelhado com Legumes* (R$ 18,00) ou o *Filé de Peixe Empanado* (R$ 22,00). Ou digite *"cardápio"* para ver todas as opções!`
+              );
+            }
+          },
+          {
+            // Ex: "Não gosto de feijão" / "Eu não como carne vermelha"
+            regex: /(?:eu\s+)?n[aã]o\s+(?:gosto\s+de|como|quero|posso\s+comer)\s+(.*)/i,
+            reassemblar: function (captura) {
+              const refletido = refletirPronomes(captura);
+              return (
+                `Compreendo perfeitamente que você não queira *${refletido}*. Nós podemos personalizar sua marmita retirando ingredientes que você não goste!\n\n` +
+                `Qual dos nossos pratos você prefere escolher? (Digite *"cardápio"* para conferir as opções da semana).`
+              );
+            }
+          },
+          {
+            // Ex: "Estou com muita fome" / "Estou indeciso"
+            regex: /(?:eu\s+)?(?:estou|to|tô)\s+(.*)/i,
+            reassemblar: function (captura) {
+              const refletido = refletirPronomes(captura);
+              return (
+                `Você diz que está *${refletido}*? Nada melhor que uma marmita caseira e quentinha para resolver isso! 🍱\n\n` +
+                `Diga um dia da semana (como *segunda*, *quarta* ou *sexta*) ou digite *"cardápio"* para escolher sua refeição!`
+              );
+            }
+          },
+          {
+            // Ex: "Vocês têm pizza?" / "Tem hambúrguer?"
+            regex: /(?:voc[eê]s\s+t[eê]m|tem|vende|serve)\s+(.*)/i,
+            reassemblar: function (captura) {
+              const refletido = refletirPronomes(captura);
+              return (
+                `Você pergunta se temos *${refletido}*? No momento não trabalhamos com esse item, mas nossas marmitas tradicionais fazem o maior sucesso!\n\n` +
+                `Digite *"cardápio"* para ver todos os nossos 14 pratos da semana e bebidas.`
+              );
+            }
+          },
+          {
+            // Ex: "Acho que vou querer (...)" / "Meu prato favorito é (...)"
+            regex: /(?:meu|minha)\s+([a-zÀ-ú\s]+)\s+[eé]\s+(.*)/i,
+            reassemblar: function (captura1, captura2) {
+              return (
+                `Que legal saber que seu(sua) ${refletirPronomes(captura1)} é *${refletirPronomes(captura2)}*! 😊\n\n` +
+                `Aqui na *Marmita Express* temos opções deliciosas todos os dias. Digite *"cardápio"* para escolher o seu prato de hoje!`
+              );
+            }
+          }
+        ];
+
+        function gerarFallbackEliza(a) {
+          // 1. Tenta aplicar decomposição e reassemblagem com reflexão pronominal
+          for (let i = 0; i < PADROES_DECOMPOSICAO_ELIZA.length; i++) {
+            const regra = PADROES_DECOMPOSICAO_ELIZA[i];
+            const match = a.textoOriginal.match(regra.regex);
+            if (match && match[1]) {
+              return regra.reassemblar(match[1], match[2]);
+            }
+          }
+
+          // 2. Fallback reflexivo contextual baseado na etapa atual do pedido
+          const trechoRefletido = refletirPronomes(a.textoOriginal);
+
+          if (estadoPedido.etapa === ESTADOS.PERSONALIZACAO && estadoPedido.pratos.length > 0) {
+            const pratoAtual = estadoPedido.pratos[estadoPedido.ultimoPratoIndex];
+            return (
+              `Quando você diz _"${trechoRefletido}"_, gostaria que eu anotasse isso como observação no preparo do seu *${pratoAtual.nome}*, ou prefere a receita padrão da casa?`
+            );
+          }
+
+          if (estadoPedido.etapa === ESTADOS.BEBIDA) {
+            return (
+              `Sobre _"${trechoRefletido}"_, não encontrei essa bebida. Temos *Refrigerante Lata* (R$ 6,00), *Suco Natural* (R$ 7,00) e *Água Mineral* (R$ 4,00).\n\n` +
+              `Deseja alguma dessas ou prefere seguir *sem bebida*?`
+            );
+          }
+
+          return (
+            `Entendi você mencionar _"${trechoRefletido}"_, mas não localizei esse item no nosso cardápio. 😊\n\n` +
+            `Você pode digitar *"cardápio"* para ver todos os nossos pratos e preços, dizer um *dia da semana* (ex: _segunda, quarta, sábado_) ou digitar o nome do prato desejado (como *Feijoada*, *Strogonoff*, *Lasanha* ou *Churrasco Misto*).`
+          );
+        }
+
+        /**
+         * Ponto de entrada principal do Motor de Diálogo
+         */
+        function gerarResposta(textoUsuario) {
+          const analise = NLP.processarEntrada(textoUsuario);
+
+          // Ordena regras por rank decrescente (prioridade máxima primeiro)
+          const regrasOrdenadas = REGRAS_PRIORITARIAS.slice().sort((r1, r2) => r2.rank - r1.rank);
+
+          // 1. Verifica regras prioritárias (Guardrails, Cancelamento, Pratos, Cardápio)
+          for (let i = 0; i < regrasOrdenadas.length; i++) {
+            const regra = regrasOrdenadas[i];
+            if (regra.match(analise)) {
+              return regra.responder(analise);
+            }
+          }
+
+          // 2. Verifica transição contextual da Máquina de Estados do pedido
+          const respostaContextual = processarPorEstado(analise);
+          if (respostaContextual) {
+            return respostaContextual;
+          }
+
+          // 3. Fallback reflexivo estilo ELIZA (Decomposição + Reflexão Pronominal + Reassemblagem)
+          return gerarFallbackEliza(analise);
+        }
+
+        return Object.freeze({
+          gerarResposta
+        });
+      })();
+
+      /* -------------------------------------------------------------------------
+       * 5. RENDERIZAÇÃO DE MENSAGENS E INTERFACE (ESTILO WHATSAPP DARK)
+       * ------------------------------------------------------------------------- */
+      const chatMessages = document.getElementById('chatMessages');
+      const messageInput = document.getElementById('messageInput');
+      const sendBtn = document.getElementById('sendBtn');
+      const typingIndicator = document.getElementById('typingIndicator');
+      const btnResetChat = document.getElementById('btnResetChat');
+      const botStatus = document.getElementById('botStatus');
+
+      function getCurrentTime() {
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        return `${hours}:${minutes}`;
+      }
+
+      function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      function parseMarkdown(text) {
+        let safe = escapeHtml(text);
+        safe = safe.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        safe = safe.replace(/\*(.*?)\*/g, '<strong>$1</strong>');
+        safe = safe.replace(/_(.*?)_/g, '<em>$1</em>');
+        safe = safe.replace(/\n/g, '<br>');
+        return safe;
+      }
+
+      function appendMessage(sender, text) {
+        const messageRow = document.createElement('div');
+        messageRow.className = `message-row ${sender}`;
+
+        const bubble = document.createElement('div');
+        bubble.className = 'message-bubble';
+        bubble.innerHTML = parseMarkdown(text);
+
+        const meta = document.createElement('div');
+        meta.className = 'message-meta';
+        meta.innerHTML = `
+          <span>${getCurrentTime()}</span>
+          ${sender === 'user' ? '<span class="ticks">✓✓</span>' : ''}
+        `;
+
+        bubble.appendChild(meta);
+        messageRow.appendChild(bubble);
+        chatMessages.appendChild(messageRow);
+
+        scrollToBottom();
+      }
+
+      function appendUserMessage(text) {
+        appendMessage('user', text);
+      }
+
+      function appendBotMessage(text) {
+        appendMessage('bot', text);
+      }
+
+      function scrollToBottom() {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+
+      function setTyping(isTyping) {
+        if (isTyping) {
+          typingIndicator.classList.add('active');
+          botStatus.textContent = 'digitando...';
+          sendBtn.disabled = true;
+        } else {
+          typingIndicator.classList.remove('active');
+          botStatus.textContent = 'Online agora';
+          sendBtn.disabled = false;
+        }
+        scrollToBottom();
+      }
+
+      /* -------------------------------------------------------------------------
+       * 6. EVENTOS DE INTERAÇÃO E INICIALIZAÇÃO
+       * ------------------------------------------------------------------------- */
+      function handleSendMessage() {
+        const text = messageInput.value.trim();
+        if (!text) return;
+
+        appendUserMessage(text);
+        messageInput.value = '';
+        messageInput.focus();
+
+        setTyping(true);
+
+        // Simula o tempo natural de digitação do atendente (100% local, sem rede)
+        const resposta = MotorEliza.gerarResposta(text);
+        const delay = Math.min(650, Math.max(280, resposta.length * 2));
+
+        setTimeout(() => {
+          setTyping(false);
+          appendBotMessage(resposta);
+        }, delay);
+      }
+
+      sendBtn.addEventListener('click', handleSendMessage);
+
+      messageInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          handleSendMessage();
+        }
+      });
+
+      btnResetChat.addEventListener('click', () => {
+        if (confirm("Deseja reiniciar o atendimento com a Marmita Express?")) {
+          initChat();
+        }
+      });
+
+      function initChat() {
+        resetarEstadoPedido();
+        chatMessages.innerHTML = '';
+
+        const mensagemBoasVindas =
+          "Olá! Seja muito bem-vindo à *Marmita Express*! 🍱\n\n" +
+          "Preparamos refeições caseiras, quentinhas e saborosas todos os dias da semana (taxa de entrega fixa de *R$ 5,00*).\n\n" +
+          "📅 Você gostaria de ver o nosso *cardápio completo*, consultar um *dia da semana* ou já dizer qual prato deseja pedir hoje?";
+
+        appendBotMessage(mensagemBoasVindas);
+      }
+
+      // Inicializa o atendimento
+      initChat();
+
+    })();
+  </script>
+</body>
+</html>
